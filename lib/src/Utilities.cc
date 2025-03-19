@@ -1034,16 +1034,31 @@ char *getHttpFullDate(const trantor::Date &date)
     return lastTimeString;
 }
 
+namespace {
+// G++ 8.3 버전에서 std::put_time() 사용시 빌드 오류 발생
+// 구버전 컴파일러 (2025-03-20 라즈베리파이4 기준)에서 사용할 수 있도록
+// 시간 포매팅 함수를 임의로 정의 
+    
+std::string formatTime(const std::tm* timeinfo, const char* format) {
+    char buffer[100];
+    strftime(buffer, sizeof(buffer), format, timeinfo);
+    return std::string(buffer);
+}
+
+}
+
 void dateToCustomFormattedString(const std::string &fmtStr,
-                                 std::string &str,
-                                 const trantor::Date &date)
+                                    std::string &str,
+                                    const trantor::Date &date)
 {
     auto nowSecond = date.microSecondsSinceEpoch() / MICRO_SECONDS_PRE_SEC;
     time_t seconds = static_cast<time_t>(nowSecond);
     struct tm tm_LValue = date.tmStruct();
     std::stringstream Out;
     Out.imbue(std::locale{"C"});
-    Out << std::put_time(&tm_LValue, fmtStr.c_str());
+    // Out << std::put_time(&tm_LValue, fmtStr.c_str());
+    std::string formattedTime = formatTime(&tm_LValue, fmtStr.c_str());
+    Out << formattedTime;
     str = Out.str();
 }
 
